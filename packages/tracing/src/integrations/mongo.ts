@@ -19,6 +19,7 @@ const OPERATIONS = [
   'dropIndex', // dropIndex(indexName, options, callback)
   'dropIndexes', // dropIndexes(options, callback)
   'estimatedDocumentCount', // estimatedDocumentCount(options, callback)
+  'find', // find(query, options, callback)
   'findOne', // findOne(query, options, callback)
   'findOneAndDelete', // findOneAndDelete(filter, options, callback)
   'findOneAndReplace', // findOneAndReplace(filter, replacement, options, callback)
@@ -57,6 +58,7 @@ const OPERATION_SIGNATURES: {
   deleteOne: ['filter'],
   distinct: ['key', 'query'],
   dropIndex: ['indexName'],
+  find: ['query'],
   findOne: ['query'],
   findOneAndDelete: ['filter'],
   findOneAndReplace: ['filter', 'replacement'],
@@ -100,7 +102,7 @@ export class Mongo implements Integration {
 
   private _operations: Operation[];
   private _describeOperations?: boolean | Operation[];
-  private _useMongoose: boolean
+  private _useMongoose: boolean;
 
   /**
    * @inheritDoc
@@ -110,7 +112,7 @@ export class Mongo implements Integration {
       ? options.operations
       : ((OPERATIONS as unknown) as Operation[]);
     this._describeOperations = 'describeOperations' in options ? options.describeOperations : true;
-    this._useMongoose = !!options.useMongoose
+    this._useMongoose = !!options.useMongoose;
   }
 
   /**
@@ -118,7 +120,7 @@ export class Mongo implements Integration {
    */
   public setupOnce(_: (callback: EventProcessor) => void, getCurrentHub: () => Hub): void {
     let collection: MongoCollection;
-    const moduleName = this._useMongoose ? 'mongoose' : 'mongodb'
+    const moduleName = this._useMongoose ? 'mongoose' : 'mongodb';
     try {
       const mongodbModule = dynamicRequire(module, moduleName) as { Collection: MongoCollection };
       collection = mongodbModule.Collection;
@@ -169,7 +171,7 @@ export class Mongo implements Integration {
         }
 
         const span = parentSpan?.startChild(getSpanContext(this, operation, args.slice(0, -1)));
-        return orig.call(this, ...args.slice(0, -1), function (err: Error, result: unknown) {
+        return orig.call(this, ...args.slice(0, -1), function(err: Error, result: unknown) {
           span?.finish();
           lastArg(err, result);
         });
